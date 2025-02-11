@@ -1,7 +1,5 @@
 import multer from "multer";
 import { createCanvas, loadImage } from "canvas";
-import path from "path";
-import fs from "fs";
 
 // Multer setup for file uploads
 const upload = multer({ dest: "public/uploads/" });

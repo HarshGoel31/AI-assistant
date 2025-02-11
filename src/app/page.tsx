@@ -3,7 +3,6 @@ import "regenerator-runtime/runtime";
 import Dress from "@/assets/dress.jpg";
 import Jacket from "@/assets/jacket.jpg";
 import ShirtImage from "@/assets/shirt.jpg";
-import { Spinner } from "@heroui/spinner";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { AudioLines, SendHorizontal, Shirt, Upload, X } from "lucide-react";
@@ -23,19 +22,15 @@ interface Message {
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState("");
-  const [tryOnPreviews, setTryOnPreviews] = useState(null);
+  const [tryOnPreviews, setTryOnPreviews] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [fetchinTryonResult, setFetchinTryonResult] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showTryOn, setShowTryOn] = useState(false);
   const [selectedGarment, setSelectedGarment] = useState<string | null>(null);
 
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
+    useSpeechRecognition();
   const [isRecording, setIsRecording] = useState(false);
 
   const handleSendMessage = async () => {
@@ -51,7 +46,7 @@ export default function Home() {
       setUserInput("");
 
       try {
-        const response = await fetch("/api/chat", {
+        const response = await fetch("/api/openai", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -62,10 +57,20 @@ export default function Home() {
         const data = await response.json();
         const aiResponse = data.response;
 
-        setMessages((prevMessages) => [
-          ...prevMessages.slice(0, -1), // Remove "Thinking..."
-          { text: aiResponse, sender: "ai" },
-        ]);
+        if (!data.error) {
+          setMessages((prevMessages) => [
+            ...prevMessages.slice(0, -1), // Remove "Thinking..."
+            { text: aiResponse, sender: "ai" },
+          ]);
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages.slice(0, -1), // Remove "Thinking..."
+            {
+              text: "Something went wrong! Please try again later.",
+              sender: "ai",
+            },
+          ]);
+        }
       } catch (error) {
         setMessages((prevMessages) => [
           ...prevMessages.slice(0, -1), // Remove "Thinking..."
@@ -81,7 +86,7 @@ export default function Home() {
     return response.blob();
   };
 
-  const handleImageUpload = async (acceptedFiles: any[]) => {
+  const handleImageUpload = async (acceptedFiles: File[]) => {
     if (!selectedGarment) return alert("Please select a garment first.");
 
     let garmentBlob = null;
@@ -136,13 +141,15 @@ export default function Home() {
   }, [browserSupportsSpeechRecognition]);
 
   useEffect(() => {
-    transcript?.length > 0 && setUserInput(transcript);
+    if (transcript?.length > 0) {
+      setUserInput(transcript);
+    }
   }, [transcript]);
 
   return (
     <div
-      className={`relative min-h-screen flex items-center justify-center transition-all duration-500
-         bg-[radial-gradient(ellipse_at_bottom,_rgba(98,0,234,0.7),_rgba(236,72,153,0.5),_rgba(255,94,77,0.3),_rgba(0,0,0,0.9))]`}
+      className="relative min-h-screen flex items-center justify-center transition-all duration-500
+         bg-[radial-gradient(ellipse_at_bottom,_rgba(98,0,234,0.7),_rgba(236,72,153,0.5),_rgba(255,94,77,0.3),_rgba(0,0,0,0.9))]"
     >
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-4">
         <motion.div
@@ -186,13 +193,16 @@ export default function Home() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsOpen(true);
-                  isRecording ? stopListening() : startListening();
+                  if (isRecording) {
+                    stopListening();
+                  } else {
+                    startListening();
+                  }
                 }}
                 className={`${
                   isRecording ? "text-red-500" : ""
                 } cursor-pointer`}
               />
-              {/* </Button> */}
             </motion.div>
           )}
         </motion.div>
@@ -247,9 +257,6 @@ export default function Home() {
               placeholder={isRecording ? "Listening ..." : "Type a message..."}
             />{" "}
             {!isRecording && !isListening && (
-              // <Button onClick={handleSendMessage} className="ml-2">
-              //   Send
-              // </Button>
               <SendHorizontal
                 onClick={handleSendMessage}
                 className="m-1 rounded text-sm w-[10%] cursor-pointer"
@@ -259,7 +266,11 @@ export default function Home() {
               onClick={(e) => {
                 e.stopPropagation();
                 setIsOpen(true);
-                isRecording ? stopListening() : startListening();
+                if (isRecording) {
+                  stopListening();
+                } else {
+                  startListening();
+                }
               }}
               className={`${
                 isRecording ? "text-red-500" : ""
