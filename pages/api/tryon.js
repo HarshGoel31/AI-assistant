@@ -1,8 +1,8 @@
 import multer from "multer";
 import { createCanvas, loadImage } from "canvas";
 
-// Multer setup for file uploads
-const upload = multer({ dest: "public/uploads/" });
+// Use memory storage instead of file system storage
+const upload = multer({ storage: multer.memoryStorage() });
 
 export const config = {
   api: {
@@ -24,14 +24,11 @@ export default function handler(req, res) {
         return res.status(500).json({ error: "File upload failed" });
       }
 
-      const userImage = req.files["images"][0];
-      const garmentImage = req.files["garment"][0];
+      const userImage = req.files["images"][0].buffer; // Access image as a buffer
+      const garmentImage = req.files["garment"][0].buffer;
 
       try {
-        const outputImage = await overlayImages(
-          userImage.path,
-          garmentImage.path
-        );
+        const outputImage = await overlayImages(userImage, garmentImage);
         res.status(200).json({ preview: outputImage });
       } catch (error) {
         console.error("Error processing images:", error);
@@ -43,11 +40,10 @@ export default function handler(req, res) {
   }
 }
 
-// Overlay the garment onto the user image
 // Overlay the garment onto the user image properly
-async function overlayImages(userPath, garmentPath) {
-  const userImg = await loadImage(userPath);
-  const garmentImg = await loadImage(garmentPath);
+async function overlayImages(userBuffer, garmentBuffer) {
+  const userImg = await loadImage(userBuffer);
+  const garmentImg = await loadImage(garmentBuffer);
 
   const canvas = createCanvas(userImg.width, userImg.height);
   const ctx = canvas.getContext("2d");
@@ -70,4 +66,3 @@ async function overlayImages(userPath, garmentPath) {
   // Convert canvas to image URL
   return canvas.toDataURL();
 }
-
