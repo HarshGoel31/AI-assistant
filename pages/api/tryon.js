@@ -46,6 +46,7 @@ export default function handler(req, res) {
 }
 
 // Overlay the garment onto the user image
+// Overlay the garment onto the user image properly
 async function overlayImages(userPath, garmentPath) {
   const userImg = await loadImage(userPath);
   const garmentImg = await loadImage(garmentPath);
@@ -53,18 +54,22 @@ async function overlayImages(userPath, garmentPath) {
   const canvas = createCanvas(userImg.width, userImg.height);
   const ctx = canvas.getContext("2d");
 
-  // Draw user image first
+  // Draw user image first (background)
   ctx.drawImage(userImg, 0, 0, userImg.width, userImg.height);
 
-  // Scale & Position garment (modify this for better alignment)
-  const garmentWidth = userImg.width * 0.7;
-  const garmentHeight = garmentImg.height * (garmentWidth / garmentImg.width);
-  const garmentX = (userImg.width - garmentWidth) / 2;
-  const garmentY = userImg.height * 0.3; // Adjust height position
+  // Adjust garment dimensions for better fit
+  const garmentWidth = userImg.width * 0.9; // Cover most of the width
+  const aspectRatio = garmentImg.width / garmentImg.height;
+  const garmentHeight = garmentWidth / aspectRatio; // Maintain aspect ratio
 
-  // Draw the garment on top
+  // Positioning: Center horizontally, align to upper body
+  const garmentX = (userImg.width - garmentWidth) / 2;
+  const garmentY = userImg.height * 0.2; // Adjust to align with shoulders
+
+  // Draw the garment image over the user image
   ctx.drawImage(garmentImg, garmentX, garmentY, garmentWidth, garmentHeight);
 
   // Convert canvas to image URL
   return canvas.toDataURL();
 }
+

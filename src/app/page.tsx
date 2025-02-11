@@ -1,27 +1,19 @@
 "use client";
 import "regenerator-runtime/runtime";
-import { useState, useRef, useEffect } from "react";
-import Dropzone from "react-dropzone";
-import axios from "axios";
-import { Button } from "@/components/ui/button";
-import Image, { StaticImageData } from "next/image";
-import { motion } from "framer-motion";
-import {
-  MessageCircle,
-  X,
-  Upload,
-  Shirt,
-  Mic,
-  AudioLines,
-  SendHorizontal,
-} from "lucide-react";
+import Dress from "@/assets/dress.jpg";
 import Jacket from "@/assets/jacket.jpg";
 import ShirtImage from "@/assets/shirt.jpg";
-import Dress from "@/assets/dress.jpg";
 import { Spinner } from "@heroui/spinner";
+import axios from "axios";
+import { motion } from "framer-motion";
+import { AudioLines, SendHorizontal, Shirt, Upload, X } from "lucide-react";
+import Image, { StaticImageData } from "next/image";
+import { useEffect, useState } from "react";
+import Dropzone from "react-dropzone";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
+import "regenerator-runtime/runtime";
 
 interface Message {
   text: string;
@@ -59,7 +51,7 @@ export default function Home() {
       setUserInput("");
 
       try {
-        const response = await fetch("/api/openai", {
+        const response = await fetch("/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -79,7 +71,7 @@ export default function Home() {
           ...prevMessages.slice(0, -1), // Remove "Thinking..."
           { text: "Error retrieving response.", sender: "ai" },
         ]);
-        console.error("Error calling OpenAI API:", error);
+        console.error("Error calling chat API:", error);
       }
     }
   };
@@ -213,7 +205,9 @@ export default function Home() {
           animate={{ opacity: 1, scale: 1 }}
         >
           <div className="flex justify-between items-center mb-4 ">
-            <h3 className="text-lg font-bold">Your AI Assistant</h3>
+            <h3 className="text-lg font-bold">
+              {isRecording ? "AI Listening" : "Your AI Assistant"}
+            </h3>
             <X
               className="cursor-pointer"
               onClick={() => {
@@ -284,62 +278,17 @@ export default function Home() {
               onClick={() => {
                 setShowTryOn(false);
                 setTryOnPreviews(null);
+                setSelectedGarment(null);
               }}
             />
           </div>
-          {/* {fetchinTryonResult ? (
-            <div className="flex justify-center">
-              <Spinner />
-            </div>
-          ) : tryOnPreviews ? (
-            <div className="flex justify-center">
-              <Image src={tryOnPreviews} width={250} height={250} alt="" />
-            </div>
-          ) : (
-            <>
-              <h3 className="text-lg font-bold mb-2">Select a Garment</h3>
-              <div className="flex space-x-2 mb-4">
-                {[
-                  { src: ShirtImage, name: "shirt" },
-                  { src: Jacket, name: "jacket" },
-                  { src: Dress, name: "dress" },
-                ].map((item, idx) => (
-                  <Image
-                    key={idx}
-                    src={item.src}
-                    width={50}
-                    height={50}
-                    alt=""
-                    className={`cursor-pointer rounded border ${
-                      selectedGarment === item.name
-                        ? "border-blue-500"
-                        : "border-gray-300"
-                    }`}
-                    onClick={() => setSelectedGarment(item.name)}
-                  />
-                ))}
-              </div>
-              {selectedGarment && (
-                <Dropzone onDrop={handleImageUpload}>
-                  {({ getRootProps, getInputProps }) => (
-                    <div
-                      {...getRootProps()}
-                      className="border bg-gray-100 flex justify-center rounded p-4 cursor-pointer"
-                    >
-                      <input {...getInputProps()} />
-                      <Upload className="h-4 w-6 text-gray-500" />
-                      <p className="text-gray-500 text-sm">
-                        Upload your picture
-                      </p>
-                    </div>
-                  )}
-                </Dropzone>
-              )}
-            </>
-          )} */}
+
           {fetchinTryonResult ? (
-            <div className="flex justify-center">
-              <Spinner />
+            <div className="flex flex-col items-center justify-center space-y-4 p-6">
+              <p className="text-gray-400 text-lg font-semibold animate-pulse">
+                Fetching your Try-On result...
+              </p>
+              {/* <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div> */}
             </div>
           ) : tryOnPreviews ? (
             <div className="flex flex-col items-center">
@@ -363,7 +312,7 @@ export default function Home() {
             </div>
           ) : (
             <>
-              <h3 className="text-lg font-bold mb-4 text-center text-white">
+              <h3 className="text-lg font-bold mb-4 text-center text-black-400">
                 Select a Garment
               </h3>
               <div className="flex justify-center space-x-4 mb-6">
